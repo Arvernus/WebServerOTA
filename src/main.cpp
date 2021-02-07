@@ -18,13 +18,16 @@
 #define VERSION "Test"
 #endif
 
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     delay(3000);
     Serial.println();
     Serial.println("******************************");
     Serial.println("*                            *");
-    Serial.print("*  "); Serial.print(StringPad(DEVICE_NAME,24,' ')); Serial.println("  *");
+    Serial.print("*  ");
+    Serial.print(StringPad(DEVICE_NAME, 24, ' '));
+    Serial.println("  *");
     Serial.println("*                            *");
     Serial.println("******************************");
     Serial.println("Start");
@@ -32,21 +35,45 @@ void setup() {
 
     LittleFS.begin();
     Dir D = LittleFS.openDir("/");
-    while (D.next()) {
+    while (D.next())
+    {
         Serial.println(D.fileName());
-        Serial.print("-"); Serial.println(StringPad(D.fileName(),39,'-'));
+        Serial.print("-");
+        Serial.println(StringPad(D.fileName(), 39, '-'));
         File F = D.openFile("r");
         int c = 0;
-        while (c >= 0) {
+        while (c >= 0)
+        {
             c = F.read();
-            if (c >=0) {
+            if (c >= 0)
+            {
                 Serial.print((char)c);
             }
         }
         Serial.println();
         Serial.println("----------------------------------------");
     }
+
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
-void loop() {
+void ShowLED(int Pin, int Delay, bool On)
+{
+    if (On)
+    {
+        digitalWrite(Pin, LOW);
+        Serial.println("The LED is on");
+    }
+    else
+    {
+        digitalWrite(Pin, HIGH);
+        Serial.println("The LED is off");
+    }
+    delay(Delay);
+}
+
+void loop()
+{
+    ShowLED(LED_BUILTIN, 1000, true);
+    ShowLED(LED_BUILTIN, 1000, false);
 }
