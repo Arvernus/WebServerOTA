@@ -1,4 +1,11 @@
 {
-    "SSID": "WagnerNetz_24",
-    "password": "MivHouchYa2@9"
+    "WiFi": {
+        "SSID": "WagnerNetz_24",
+        "password": "MivHouchYa2@9"
+    },
+    "AccessPoint": {
+        "SSID": "TestDevice",
+        "password": ""
+    },
+    "HttpPort": 80
 }
