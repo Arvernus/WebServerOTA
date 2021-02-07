@@ -7,7 +7,6 @@
 //#include <ESP8266WiFi.h>
 //#include <ESPAsyncTCP.h>
 //#include <ESPAsyncWebServer.h>
-//#include <EEPROM.h>
 
 // Global Definitions
 //
@@ -16,10 +15,31 @@
 // Global Variables
 //
 // AsyncWebServer server(80);
-const char* ssid = "WagnerNetz_24";
-const char* password = "MivHouchYa2@9";
-const char* PARAM_MESSAGE = "message";
+//const char* ssid = "WagnerNetz_24";
+//const char* password = "MivHouchYa2@9";
+//const char* PARAM_MESSAGE = "message";
 
+// Print a String with a fixed length
+//
+String StringPad(String Str, int Length, char Filler) {
+    int StrLen = Str.length();
+    String Result = "";
+    int AdditionalCharacters = 0;
+    if (Length < 0) {
+        AdditionalCharacters = -Length - StrLen;
+        while (--AdditionalCharacters >= 0) {
+            Result += Filler;
+        }
+    }
+    Result += Str;
+    if (Length > 0) {
+        AdditionalCharacters = Length - StrLen;
+        while (--AdditionalCharacters >= 0) {
+            Result += Filler;
+        }
+    }
+    return (Result);
+}
 
 // void notFound(AsyncWebServerRequest *request) {
 //     request->send(404, "text/plain", "Not found");
@@ -27,15 +47,15 @@ const char* PARAM_MESSAGE = "message";
 
 void setup() {
     Serial.begin(115200);
+    delay(3000);
     Serial.println();
     Serial.println("******************************");
     Serial.println("*                            *");
-    Serial.println("*                            *");
+    Serial.print("*  "); Serial.print(StringPad(DEVICE_NAME,24,' ')); Serial.println("  *");
     Serial.println("*                            *");
     Serial.println("******************************");
-    delay(500);
     Serial.println("Start");
-    Serial.setDebugOutput(true);
+ //   Serial.setDebugOutput(true);
  //   WiFi.mode(WIFI_STA);
  //   WiFi.begin(ssid, password);
     Serial.println("Start");
@@ -77,6 +97,23 @@ void setup() {
     // server.onNotFound(notFound);
 
     // server.begin();
+
+    LittleFS.begin();
+    Dir D = LittleFS.openDir("/");
+    while (D.next()) {
+        Serial.println(D.fileName());
+        Serial.print("-"); Serial.println(StringPad(D.fileName(),39,'-'));
+        File F = D.openFile("r");
+        int c = 0;
+        while (c >= 0) {
+            c = F.read();
+            if (c >=0) {
+                Serial.print((char)c);
+            }
+        }
+        Serial.println();
+        Serial.println("----------------------------------------");
+    }
 }
 
 void loop() {
