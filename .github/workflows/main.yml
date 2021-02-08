@@ -52,7 +52,7 @@ jobs:
 
       - name: Display Version
         run: |
-          git describe --tags
+          git describe --tags --abbrev=0
 
       - name: Run PlatformIO
         run: pio ci --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini
