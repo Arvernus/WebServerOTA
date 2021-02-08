@@ -60,3 +60,10 @@ jobs:
         run: pio ci --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -DVERSION=${{ env.VERSION }}"
         env:
           PLATFORMIO_CI_SRC: src/main.cpp
+
+      - name: WordPress Plugin Deploy
+        uses: Arvernus/action-arvernus-release-update@master
+        with:
+          package-type: "FirmWare"
+          server-secret-key: ${{ secrets.SERVER_SECRET_KEY }}
+          github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
