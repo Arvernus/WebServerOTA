@@ -51,6 +51,7 @@ jobs:
       - name: Display Version
         run: |
           cd $GITHUB_WORKSPACE
+          git status --long
           git describe --tags
 
       - name: Run PlatformIO
