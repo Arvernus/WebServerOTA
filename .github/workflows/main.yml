@@ -53,10 +53,10 @@ jobs:
       - name: Get Version
         id: GetVersion
         run: |
-          echo "VERSION=xxx" >> $GITHUB_ENV
+          echo "VERSION=`git describe --tags`" >> $GITHUB_ENV
           git describe --tags
 
       - name: Run PlatformIO
-        run: pio ci --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --D=$VERSION
+        run: pio ci --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project_option="build_flags=-D VERSION=$VERSION"
         env:
           PLATFORMIO_CI_SRC: src/main.cpp
