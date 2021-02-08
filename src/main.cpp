@@ -23,14 +23,14 @@ void setup()
     Serial.begin(115200);
     delay(3000);
     Serial.println();
-    Serial.println("******************************");
-    Serial.println("*                            *");
-    Serial.print("*  ");
-    Serial.print(StringPad(DEVICE_NAME, 24, ' '));
-    Serial.println("  *");
-    Serial.println("*                            *");
-    Serial.println("******************************");
-    Serial.println("Start");
+    Serial.println(StringPad("*", 50, '*'));
+    Serial.println("*" + StringPad("*", -49, ' '));
+    Serial.println("*  " + StringPad(DEVICE_NAME, 44, ' ')+"  *");
+    Serial.println("*" + StringPad("*", -49, ' '));
+    Serial.println("*  Version: " + StringPad(VERSION, 35, ' ') + "  *");
+    Serial.println("*" + StringPad("*", -49, ' '));
+    Serial.println(StringPad("*", 50, '*'));
+    Serial.println();
     Serial.println("Start");
 
     LittleFS.begin();
