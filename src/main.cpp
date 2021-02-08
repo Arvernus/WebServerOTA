@@ -15,8 +15,10 @@
 #define DEVICE_NAME "TestDevice"
 #endif
 #ifndef VERSION
-#define VERSION "Test"
+#define VERSION Test
 #endif
+#define MAKE_STR(S) STR(S)
+#define STR(S) #S
 
 void setup()
 {
@@ -27,7 +29,7 @@ void setup()
     Serial.println("*" + StringPad("*", -49, ' '));
     Serial.println("*  " + StringPad(DEVICE_NAME, 44, ' ')+"  *");
     Serial.println("*" + StringPad("*", -49, ' '));
-    Serial.println("*  Version: " + StringPad(VERSION, 35, ' ') + "  *");
+    Serial.println("*  Version: " + StringPad(MAKE_STR(VERSION), 35, ' ') + "  *");
     Serial.println("*" + StringPad("*", -49, ' '));
     Serial.println(StringPad("*", 50, '*'));
     Serial.println();
