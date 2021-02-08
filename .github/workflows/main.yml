@@ -48,7 +48,7 @@ jobs:
           wget https://github.com/xxxajk/spi4teensy3/archive/master.zip -O /tmp/spi4teensy3.zip
           unzip /tmp/spi4teensy3.zip -d /tmp
 
-      - name Display Version
+      - name: Display Version
           run |
             git describe
 
