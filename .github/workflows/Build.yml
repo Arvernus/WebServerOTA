@@ -57,6 +57,6 @@ jobs:
           git describe --tags
 
       - name: Run PlatformIO
-        run: pio ci --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -D VERSION=\""$VERSION\"""
+        run: pio ci --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -D VERSION=\"$VERSION\""
         env:
           PLATFORMIO_CI_SRC: src/main.cpp
