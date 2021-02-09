@@ -58,6 +58,12 @@ jobs:
         env:
           PLATFORMIO_CI_SRC: src/main.cpp
 
+      - name: List Files
+        id: ListFiles
+        run: |
+          pwd
+          ls -al
+
       - name: Deploy FirmWare on Update-Server
 #        uses: Arvernus/action-arvernus-release-update@master
         uses: andreaswagner42/action-arvernus-release-update@master
