@@ -63,6 +63,10 @@ jobs:
         run: |
           pwd
           ls -al
+          cd ..
+          ls -al
+          cd ..
+          ls -al
 
       - name: Deploy FirmWare on Update-Server
 #        uses: Arvernus/action-arvernus-release-update@master
