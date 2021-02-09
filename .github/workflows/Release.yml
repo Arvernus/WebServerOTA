@@ -62,6 +62,9 @@ jobs:
         id: ListFiles
         run: |
           pwd
+          env
+          ls -al
+          cd ..
           ls -al
           cd ..
           ls -al
