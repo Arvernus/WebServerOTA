@@ -62,7 +62,8 @@ jobs:
           PLATFORMIO_CI_SRC: src/main.cpp
 
       - name: Deploy FirmWare on Update-Server
-        uses: Arvernus/action-arvernus-release-update@master
+#        uses: Arvernus/action-arvernus-release-update@master
+        uses: andreaswagner42/action-arvernus-release-update@master
         with:
           package-type: "FirmWare"
           package-file-name: ".pio/build/d1_mini/firmware.bin"
