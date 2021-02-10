@@ -66,6 +66,6 @@ jobs:
         with:
           package-type: "Firmware"
           package-file-name: "${{env.BUILD_DIR}}/.pio/build/d1_mini/firmware.bin"
-          package-extension: "bin"
+          package-file-extension: "bin"
           server-secret-key: ${{ secrets.SERVER_SECRET_KEY }}
           github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
