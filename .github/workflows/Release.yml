@@ -72,11 +72,11 @@ jobs:
           ls -al
           cd ..
           ls -al
-          cd ..
-          ls -al
           pwd
           echo "--------"
-          cd $HOME/.pio/build
+          cd .pio
+          ls -al
+          cd build
           ls -al
           cd d1_mini
           ls -al
