@@ -74,15 +74,18 @@ jobs:
           ls -al
           cd ..
           ls -al
-          echo "--------"
           pwd
-          find . -name "d1_mini" -print
+          echo "--------"
+          cd $HOME/.pio/build
+          ls -al
+          cd d1_mini
+          ls -al
 
       - name: Deploy FirmWare on Update-Server
 #        uses: Arvernus/action-arvernus-release-update@master
         uses: andreaswagner42/action-arvernus-release-update@master
         with:
           package-type: "Firmware"
-          package-file-name: "${{github.workspace}}/.pio/build/d1_mini/firmware.bin"
+          package-file-name: "${{env.HOME}}/.pio/build/d1_mini/firmware.bin"
           server-secret-key: ${{ secrets.SERVER_SECRET_KEY }}
           github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
