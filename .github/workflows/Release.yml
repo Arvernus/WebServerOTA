@@ -56,7 +56,7 @@ jobs:
       - name: Run PlatformIO
         run: |
           mkdir -p ${{github.workspace}}/.pio/build
-          pio ci --build_dir="${{github.workspace}}/.pio/build" --keep-build-dir --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -DVERSION=${{ env.VERSION }}"
+          pio ci --build-dir="${{github.workspace}}/.pio/build" --keep-build-dir --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -DVERSION=${{ env.VERSION }}"
         env:
           PLATFORMIO_CI_SRC: src/main.cpp
 
