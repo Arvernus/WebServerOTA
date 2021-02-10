@@ -62,7 +62,7 @@ jobs:
 
       - name: Deploy FirmWare on Update-Server
 #        uses: Arvernus/action-arvernus-release-update@master
-        uses: andreaswagner42/action-arvernus-release-update@master
+        uses: Arvernus/action-arvernus-release-update@master
         with:
           package-type: "Firmware"
           package-file-name: "${{env.BUILD_DIR}}/.pio/build/d1_mini/firmware.bin"
