@@ -47,16 +47,16 @@ jobs:
           wget https://github.com/xxxajk/spi4teensy3/archive/master.zip -O /tmp/spi4teensy3.zip
           unzip /tmp/spi4teensy3.zip -d /tmp
 
-      - name: Get Version
-        id: GetVersion
+      - name: Get Version and Build-Dir
+        id: GetVersionAndBuildDir
         run: |
           echo "VERSION=`git describe --tags`" >> $GITHUB_ENV
           git describe --tags
+          mkdir -p $HOME/.pio/build
+          echo "BUILD_DIR=$HOME/.pio/build" >> $GITHUB_ENV
 
       - name: Run PlatformIO
-        run: |
-          mkdir -p $HOME/.pio/build
-          pio ci --build-dir=$HOME/.pio/build --keep-build-dir --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -DVERSION=${{ env.VERSION }}"
+        run: pio ci --build-dir=${{env.BUILD_DIR}} --keep-build-dir --lib="." --lib="/tmp/spi4teensy3-master" --board=d1_mini --project-option="build_flags = -DVERSION=${{env.VERSION}}"
         env:
           PLATFORMIO_CI_SRC: src/main.cpp
 
@@ -90,6 +90,6 @@ jobs:
         uses: andreaswagner42/action-arvernus-release-update@master
         with:
           package-type: "Firmware"
-          package-file-name: "${{env.HOME}}/.pio/build/.pio/build/d1_mini/firmware.bin"
+          package-file-name: "${{env.BUILD_DIR}}/.pio/build/d1_mini/firmware.bin"
           server-secret-key: ${{ secrets.SERVER_SECRET_KEY }}
           github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
