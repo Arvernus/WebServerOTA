@@ -78,6 +78,10 @@ jobs:
           ls -al
           cd build
           ls -al
+          cd .pio
+          ls -al
+          cd build
+          ls -al
           cd d1_mini
           ls -al
 
@@ -86,6 +90,6 @@ jobs:
         uses: andreaswagner42/action-arvernus-release-update@master
         with:
           package-type: "Firmware"
-          package-file-name: "${{env.HOME}}/.pio/build/d1_mini/firmware.bin"
+          package-file-name: "${{env.HOME}}/.pio/build/.pio/build/d1_mini/firmware.bin"
           server-secret-key: ${{ secrets.SERVER_SECRET_KEY }}
           github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
