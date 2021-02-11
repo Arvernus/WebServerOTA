@@ -76,6 +76,6 @@ void ShowLED(int Pin, int Delay, bool On)
 
 void loop()
 {
-    ShowLED(LED_BUILTIN, 1000, true);
-    ShowLED(LED_BUILTIN, 1000, false);
+    ShowLED(LED_BUILTIN, 500, true);
+    ShowLED(LED_BUILTIN, 500, false);
 }
