@@ -53,7 +53,7 @@ void setup()
             }
         }
         Serial.println();
-        Serial.println("----------------------------------------");
+        Serial.println(F("----------------------------------------"));
     }
 
     pinMode(LED_BUILTIN, OUTPUT);
