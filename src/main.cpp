@@ -14,7 +14,7 @@
 // Global Definitions from Build System
 //
 #ifndef DEVICE_NAME
-#define DEVICE_NAME "TestDevice"
+#define DEVICE_NAME "TEST"
 #endif
 #ifndef VERSION
 #define VERSION Test
@@ -32,46 +32,41 @@ FS* filesystem = &LittleFS;
 #define LED_ON LOW
 #define LED_OFF HIGH
 
-
 // For Config Portal
 // SSID and PW for Config Portal
-String ssid           = "ESP_" + String(ESP.getChipId(), HEX);
-const char* password  = "your_password";
+String SSID = DEVICE_NAME + String(ESP.getChipId(), HEX);
+String Password = String(ESP.getChipId(), HEX);
 
 // SSID and PW for your Router
 String Router_SSID;
 String Router_Pass;
 
-// You only need to format the filesystem once
-//#define FORMAT_FILESYSTEM       true
-#define FORMAT_FILESYSTEM         false
-
-#define MIN_AP_PASSWORD_SIZE    8
-#define SSID_MAX_LEN            32
-#define PASS_MAX_LEN            64
+#define MIN_AP_PASSWORD_SIZE 8
+#define SSID_MAX_LEN 32
+#define PASS_MAX_LEN 64
 
 typedef struct
 {
-  char wifi_ssid[SSID_MAX_LEN];
-  char wifi_pw  [PASS_MAX_LEN];
+  char WiFi_SSID[SSID_MAX_LEN];
+  char WiFi_Password [PASS_MAX_LEN];
 }  WiFi_Credentials;
 
 typedef struct
 {
-  String wifi_ssid;
-  String wifi_pw;
+  String WiFi_SSID;
+  String WiFi_Password;
 }  WiFi_Credentials_String;
 
-#define NUM_WIFI_CREDENTIALS      2
+#define NUM_WIFI_CREDENTIALS 2
 
 typedef struct
 {
-  WiFi_Credentials  WiFi_Creds [NUM_WIFI_CREDENTIALS];
+  WiFi_Credentials WiFi_Creds [NUM_WIFI_CREDENTIALS];
 } WM_Config;
 
-WM_Config         WM_config;
+WM_Config WM_config;
 
-#define  CONFIG_FILENAME              F("/wifi_cred.dat")
+#define CONFIG_FILENAME              F("/wifi_cred.dat")
 //////
 
 // Indicates whether ESP has WiFi credentials saved from previous session, or double reset detected
@@ -159,28 +154,6 @@ char blynk_token  [33]  = "YOUR_BLYNK_TOKEN";
 //flag for saving data
 bool shouldSaveConfig = false;
 
-///////////////////////////////////////////
-// New in v1.4.0
-/******************************************
- * // Defined in ESPAsync_WiFiManager.h
-typedef struct
-{
-  IPAddress _ap_static_ip;
-  IPAddress _ap_static_gw;
-  IPAddress _ap_static_sn;
-}  WiFi_AP_IPConfig;
-typedef struct
-{
-  IPAddress _sta_static_ip;
-  IPAddress _sta_static_gw;
-  IPAddress _sta_static_sn;
-#if USE_CONFIGURABLE_DNS
-  IPAddress _sta_static_dns1;
-  IPAddress _sta_static_dns2;
-#endif
-}  WiFi_STA_IPConfig;
-******************************************/
-
 WiFi_AP_IPConfig  WM_AP_IPconfig;
 WiFi_STA_IPConfig WM_STA_IPconfig;
 
@@ -226,20 +199,8 @@ void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
 
 uint8_t connectMultiWiFi()
 {
-#if ESP32
-  // For ESP32, this better be 0 to shorten the connect time.
-  // For ESP32-S2, must be > 500
-  #if ( ARDUINO_ESP32S2_DEV || ARDUINO_FEATHERS2 || ARDUINO_PROS2 || ARDUINO_MICROS2 )
-    #define WIFI_MULTI_1ST_CONNECT_WAITING_MS           500L
-  #else
-    #define WIFI_MULTI_1ST_CONNECT_WAITING_MS           0L
-  #endif
-#else
-  // For ESP8266, this better be 2200 to enable connect the 1st time
-  #define WIFI_MULTI_1ST_CONNECT_WAITING_MS             2200L
-#endif
-
-#define WIFI_MULTI_CONNECT_WAITING_MS                   100L
+#define WIFI_MULTI_1ST_CONNECT_WAITING_MS 2200L
+#define WIFI_MULTI_CONNECT_WAITING_MS 100L
   
   uint8_t status;
 
@@ -253,9 +214,9 @@ uint8_t connectMultiWiFi()
   for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
   {
     // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-    if ( (String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE) )
+    if ( (String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE) )
     {
-      LOGERROR3(F("* Additional SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw );
+      LOGERROR3(F("* Additional SSID = "), WM_config.WiFi_Creds[i].WiFi_SSID, F(", PW = "), WM_config.WiFi_Creds[i].WiFi_Password);
     }
   }
   
@@ -432,6 +393,9 @@ void saveConfigData()
   }
 }
 
+
+//////////////////////////////////////////////////////////////////////////////
+//
 void setup()
 {
   //set led pin as output
@@ -442,19 +406,39 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
-  //clean FS, for testing
-  //FileFS.format();
+  Serial.println();
+  Serial.println(StringPad("*", 50, '*'));
+  Serial.println("*" + StringPad("*", -49, ' '));
+  Serial.println("*  " + StringPad(DEVICE_NAME, 44, ' ')+"  *");
+  Serial.println("*" + StringPad("*", -49, ' '));
+  Serial.println("*  Version: " + StringPad(MAKE_STR(VERSION), 35, ' ') + "  *");
+  Serial.println("*" + StringPad("*", -49, ' '));
+  Serial.println(StringPad("*", 50, '*'));
+  Serial.println();
+  Serial.println("Start");
 
-  // Mount the filesystem
   bool result = LittleFS.begin();
-
-#if USE_LITTLEFS
   Serial.print(F("\nLittleFS opened: "));
-#else
-  Serial.print(F("\nSPIFFS opened: "));
-#endif
-
   Serial.println(result ? F("OK") : F("Failed"));
+  Dir D = LittleFS.openDir("/");
+  while (D.next())
+  {
+    Serial.println(D.fileName());
+    Serial.print("-");
+    Serial.println(StringPad(D.fileName(), 39, '-'));
+    File F = D.openFile("r");
+    int c = 0;
+    while (c >= 0)
+    {
+      c = F.read();
+      if (c >= 0)
+      {
+        Serial.print((char)c);
+      }
+    }
+    Serial.println();
+    Serial.println(F("----------------------------------------"));
+  }
 
   //read configuration from FS json
   Serial.println(F("Mounting FS..."));
@@ -653,21 +637,21 @@ void setup()
       String tempSSID = ESPAsync_wifiManager.getSSID(i);
       String tempPW   = ESPAsync_wifiManager.getPW(i);
 
-      if (strlen(tempSSID.c_str()) < sizeof(WM_config.WiFi_Creds[i].wifi_ssid) - 1)
-        strcpy(WM_config.WiFi_Creds[i].wifi_ssid, tempSSID.c_str());
+      if (strlen(tempSSID.c_str()) < sizeof(WM_config.WiFi_Creds[i].WiFi_SSID) - 1)
+        strcpy(WM_config.WiFi_Creds[i].WiFi_SSID, tempSSID.c_str());
       else
-        strncpy(WM_config.WiFi_Creds[i].wifi_ssid, tempSSID.c_str(), sizeof(WM_config.WiFi_Creds[i].wifi_ssid) - 1);
+        strncpy(WM_config.WiFi_Creds[i].WiFi_SSID, tempSSID.c_str(), sizeof(WM_config.WiFi_Creds[i].WiFi_SSID) - 1);
 
-      if (strlen(tempPW.c_str()) < sizeof(WM_config.WiFi_Creds[i].wifi_pw) - 1)
-        strcpy(WM_config.WiFi_Creds[i].wifi_pw, tempPW.c_str());
+      if (strlen(tempPW.c_str()) < sizeof(WM_config.WiFi_Creds[i].WiFi_Password) - 1)
+        strcpy(WM_config.WiFi_Creds[i].WiFi_Password, tempPW.c_str());
       else
-        strncpy(WM_config.WiFi_Creds[i].wifi_pw, tempPW.c_str(), sizeof(WM_config.WiFi_Creds[i].wifi_pw) - 1);
+        strncpy(WM_config.WiFi_Creds[i].WiFi_Password, tempPW.c_str(), sizeof(WM_config.WiFi_Creds[i].WiFi_Password) - 1);
 
       // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-      if ( (String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE) )
+      if ( (String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE) )
       {
-        LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw );
-        wifiMulti.addAP(WM_config.WiFi_Creds[i].wifi_ssid, WM_config.WiFi_Creds[i].wifi_pw);
+        LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].WiFi_SSID, F(", PW = "), WM_config.WiFi_Creds[i].WiFi_Password);
+        wifiMulti.addAP(WM_config.WiFi_Creds[i].WiFi_SSID, WM_config.WiFi_Creds[i].WiFi_Password);
       }
     }
 
@@ -693,14 +677,14 @@ void setup()
     for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
     {
       // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-      if ( (String(WM_config.WiFi_Creds[i].wifi_ssid) != "") && (strlen(WM_config.WiFi_Creds[i].wifi_pw) >= MIN_AP_PASSWORD_SIZE) )
+      if ( (String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE) )
       {
-        LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].wifi_ssid, F(", PW = "), WM_config.WiFi_Creds[i].wifi_pw );
-        wifiMulti.addAP(WM_config.WiFi_Creds[i].wifi_ssid, WM_config.WiFi_Creds[i].wifi_pw);
+        LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].WiFi_SSID, F(", PW = "), WM_config.WiFi_Creds[i].WiFi_Password);
+        wifiMulti.addAP(WM_config.WiFi_Creds[i].WiFi_SSID, WM_config.WiFi_Creds[i].WiFi_Password);
       }
     }
 
-    if ( WiFi.status() != WL_CONNECTED ) 
+    if ( WiFi.status() != WL_CONNECTED )
     {
       Serial.println(F("ConnectMultiWiFi in setup"));
 
