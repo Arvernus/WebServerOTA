@@ -3,7 +3,6 @@
 // WIFI Setup per Web-Front-End.
 //
 #include <Arduino.h>
-#include <FS.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WiFiMulti.h>
@@ -22,15 +21,21 @@
 #define MAKE_STR(S) STR(S)
 #define STR(S) #S
 
-// Use from 0 to 4. Higher number, more debugging messages and memory usage.
-#define _ESPASYNC_WIFIMGR_LOGLEVEL_    3
-
-ESP8266WiFiMulti wifiMulti;
-
-FS* filesystem = &LittleFS;
-
+// Other Constants
+//
 #define LED_ON LOW
 #define LED_OFF HIGH
+#define _ESPASYNC_WIFIMGR_LOGLEVEL_ 3
+#define CONFIG_FILE "/config.json"
+
+// Global Variables
+//
+Config Conf;
+
+
+//////////////////////////////////////////////////////////////////////////////
+//
+ESP8266WiFiMulti wifiMulti;
 
 // For Config Portal
 // SSID and PW for Config Portal
@@ -65,9 +70,6 @@ typedef struct
 } WM_Config;
 
 WM_Config WM_config;
-
-#define CONFIG_FILENAME              F("/wifi_cred.dat")
-//////
 
 // Indicates whether ESP has WiFi credentials saved from previous session, or double reset detected
 bool initialConfig = false;
@@ -143,8 +145,6 @@ IPAddress APStaticSN  = IPAddress(255, 255, 255, 0);
 
 #define HTTP_PORT           80
 
-const char* CONFIG_FILE = "/config.json";
-
 //define your default values here, if there are different values in config.json, they are overwritten.
 //length should be max size + 1
 char mqtt_server  [40]  = "mqtt-server.ddns.net";
@@ -156,6 +156,8 @@ bool shouldSaveConfig = false;
 
 WiFi_AP_IPConfig  WM_AP_IPconfig;
 WiFi_STA_IPConfig WM_STA_IPconfig;
+
+//////////////////////////////////////////////////////////////////////////////
 
 void initAPIPConfigStruct(WiFi_AP_IPConfig &in_WM_AP_IPconfig)
 {
@@ -336,8 +338,7 @@ void check_status()
 bool loadConfigData()
 {
   return false;
-  File file = LittleFS.open(CONFIG_FILENAME, "r");
-  LOGERROR(F("LoadWiFiCfgFile "));
+  File file = LittleFS.open(CONFIG_FILE, "r");
 
   memset(&WM_config,       0, sizeof(WM_config));
 
@@ -354,7 +355,6 @@ bool loadConfigData()
     //////
 
     file.close();
-    LOGERROR(F("OK"));
 
     // New in v1.4.0
     displayIPConfigStruct(WM_STA_IPconfig);
@@ -364,7 +364,7 @@ bool loadConfigData()
   }
   else
   {
-    LOGERROR(F("failed"));
+    Serial.println(F("failed"));
 
     return false;
   }
@@ -373,8 +373,8 @@ bool loadConfigData()
 void saveConfigData()
 {
   return;
-  File file = LittleFS.open(CONFIG_FILENAME, "w");
-  LOGERROR(F("SaveWiFiCfgFile "));
+  File file = LittleFS.open(CONFIG_FILE, "w");
+  Serial.println(F("SaveWiFiCfgFile "));
 
   if (file)
   {
@@ -387,11 +387,11 @@ void saveConfigData()
     //////
 
     file.close();
-    LOGERROR(F("OK"));
+    Serial.println(F("OK"));
   }
   else
   {
-    LOGERROR(F("failed"));
+    Serial.println(F("failed"));
   }
 }
 
@@ -424,76 +424,8 @@ void setup()
   ListDir("/");
   Serial.println();
   CatFile(CONFIG_FILE);
-  Config Conf;
   ReadConfig(Conf, CONFIG_FILE, DEVICE_NAME);
-
-  //read configuration from FS json
-  Serial.println(F("Mounting FS..."));
-
-  if (1) 
-  {
-    Serial.println(F("Mounted file system"));
-
-    if (LittleFS.exists(CONFIG_FILE)) 
-    {
-      //file exists, reading and loading
-      Serial.println(F("Reading config file"));
-
-      File configFile = LittleFS.open(CONFIG_FILE, "r");
-
-      if (configFile) 
-      {
-        Serial.println(F("Opened config file"));
-
-        size_t size = configFile.size();
-
-        // Allocate a buffer to store contents of the file.
-        std::unique_ptr<char[]> buf(new char[size]);
-
-        configFile.readBytes(buf.get(), size);
-
-#if (ARDUINOJSON_VERSION_MAJOR >= 6)
-
-        DynamicJsonDocument json(1024);
-        auto deserializeError = deserializeJson(json, buf.get());
-
-        serializeJson(json, Serial);
-
-        if ( !deserializeError )
-#else
-        DynamicJsonBuffer jsonBuffer;
-
-        // Parse JSON string
-        JsonObject& json = jsonBuffer.parseObject(buf.get());
-
-        json.printTo(Serial);
-
-        // Test if parsing succeeds.
-        if (json.success())
-#endif
-        {
-          Serial.println(F("\nParsed json"));
-
-          // strcpy(mqtt_server, json["mqtt_server"]);
-          // strcpy(mqtt_port,   json["mqtt_port"]);
-          // strcpy(blynk_token, json["blynk_token"]);
-        }
-        else
-        {
-          Serial.println(F("Failed to load json config"));
-        }
-      }
-    }
-  }
-  else
-  {
-    Serial.println(F("Failed to mount FS"));
-  }
-
-  //end read
-  Serial.println(String("MQTT Server = ") + mqtt_server);
-  Serial.println(String("MQTT Port   = ") + mqtt_port);
-  Serial.println(String("Blynk Token = ") + blynk_token);
+  PrintConfig(Conf);
 
   // The extra parameters to be configured (can be either global or just in the setup)
   // After connecting, parameter.getValue() will get you the configured value
@@ -695,43 +627,6 @@ void setup()
   strcpy(mqtt_server, custom_mqtt_server.getValue());
   strcpy(mqtt_port, custom_mqtt_port.getValue());
   strcpy(blynk_token, custom_blynk_token.getValue());
-
-  //save the custom parameters to FS
-  if (shouldSaveConfig) 
-  {
-    Serial.println(F("Saving config"));
-
-#if (ARDUINOJSON_VERSION_MAJOR >= 6)
-    DynamicJsonDocument json(1024);
-#else
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& json = jsonBuffer.createObject();
-#endif
-
-    json["mqtt_server"] = mqtt_server;
-    json["mqtt_port"]   = mqtt_port;
-    json["blynk_token"] = blynk_token;
-
-    File configFile     = LittleFS.open(CONFIG_FILE, "w");
-
-    if (!configFile) 
-    {
-      Serial.println(F("Failed to open config file for writing"));
-    }
-
-#if (ARDUINOJSON_VERSION_MAJOR >= 6)
-    serializeJsonPretty(json, Serial);
-    // Write data to file and close it
-    serializeJson(json, configFile);
-#else
-    json.prettyPrintTo(Serial);
-    // Write data to file and close it
-    json.printTo(configFile);
-#endif
-
-    configFile.close();
-    //end save
-  }
 
   Serial.print(F("Local IP = "));
   Serial.println(WiFi.localIP());

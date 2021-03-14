@@ -34,6 +34,7 @@ typedef struct {
 } Config;
 void InitConfig(Config &Conf, const char *DevName);
 String ReadConfig(Config &Conf, const char *ConfigFileName, const char *DevName);
+void PrintConfig(Config &Conf);
 String WriteConfig(Config &Conf, const char *ConfigFileName);
 
 #endif
