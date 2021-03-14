@@ -1,11 +1,27 @@
 {
     "WiFi": {
         "SSID": "WagnerNetz_24",
-        "password": "MivHouchYa2@9"
+        "Password": "MivHouchYa2@9",
+        "IP": "192.168.247,47",
+        "NetMask": "255.255.255.0",
+        "Gateway": "192.168.247.1",
+        "DHCP": true,
+        "DNS": [
+            "192.168.247.1",
+            "8.8.8.8"
+        ]
     },
     "AccessPoint": {
         "SSID": "TestDevice",
-        "password": ""
+        "Password": "",
+        "IP": "192.168.0.1",
+        "NetMask": "255.255.255.0",
+        "Gateway": "192.168.0.1"
     },
-    "HttpPort": 80
+    "HttpPort": 80,
+    "Parameter": {
+        "Parameter": "Test",
+        "Answer2AllQuestions": "42",
+        "ItsOk": "true"
+    }
 }

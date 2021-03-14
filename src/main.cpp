@@ -335,6 +335,7 @@ void check_status()
 
 bool loadConfigData()
 {
+  return false;
   File file = LittleFS.open(CONFIG_FILENAME, "r");
   LOGERROR(F("LoadWiFiCfgFile "));
 
@@ -371,6 +372,7 @@ bool loadConfigData()
 
 void saveConfigData()
 {
+  return;
   File file = LittleFS.open(CONFIG_FILENAME, "w");
   LOGERROR(F("SaveWiFiCfgFile "));
 
@@ -405,7 +407,6 @@ void setup()
   // Put your setup code here, to run once
   Serial.begin(115200);
   while (!Serial);
-
   Serial.println();
   Serial.println(StringPad("*", 50, '*'));
   Serial.println("*" + StringPad("*", -49, ' '));
@@ -417,33 +418,19 @@ void setup()
   Serial.println();
   Serial.println("Start");
 
-  bool result = LittleFS.begin();
-  Serial.print(F("\nLittleFS opened: "));
-  Serial.println(result ? F("OK") : F("Failed"));
-  Dir D = LittleFS.openDir("/");
-  while (D.next())
-  {
-    Serial.println(D.fileName());
-    Serial.print("-");
-    Serial.println(StringPad(D.fileName(), 39, '-'));
-    File F = D.openFile("r");
-    int c = 0;
-    while (c >= 0)
-    {
-      c = F.read();
-      if (c >= 0)
-      {
-        Serial.print((char)c);
-      }
-    }
-    Serial.println();
-    Serial.println(F("----------------------------------------"));
-  }
+  // Mounting LittleFS and read the Config from there
+  //
+  Serial.println(LittleFS.begin() ? F("Mounted LittleFS") : F("Failed to mount LittleFS"));
+  ListDir("/");
+  Serial.println();
+  CatFile(CONFIG_FILE);
+  Config Conf;
+  ReadConfig(Conf, CONFIG_FILE, DEVICE_NAME);
 
   //read configuration from FS json
   Serial.println(F("Mounting FS..."));
 
-  if (result) 
+  if (1) 
   {
     Serial.println(F("Mounted file system"));
 
@@ -487,9 +474,9 @@ void setup()
         {
           Serial.println(F("\nParsed json"));
 
-          strcpy(mqtt_server, json["mqtt_server"]);
-          strcpy(mqtt_port,   json["mqtt_port"]);
-          strcpy(blynk_token, json["blynk_token"]);
+          // strcpy(mqtt_server, json["mqtt_server"]);
+          // strcpy(mqtt_port,   json["mqtt_port"]);
+          // strcpy(blynk_token, json["blynk_token"]);
         }
         else
         {
@@ -757,45 +744,9 @@ void setup()
   digitalWrite(LED_BUILTIN, LED_OFF);
 }
 
-void setup2()
-{
-    Serial.begin(115200);
-    delay(3000);
-    Serial.println();
-    Serial.println(StringPad("*", 50, '*'));
-    Serial.println("*" + StringPad("*", -49, ' '));
-    Serial.println("*  " + StringPad(DEVICE_NAME, 44, ' ')+"  *");
-    Serial.println("*" + StringPad("*", -49, ' '));
-    Serial.println("*  Version: " + StringPad(MAKE_STR(VERSION), 35, ' ') + "  *");
-    Serial.println("*" + StringPad("*", -49, ' '));
-    Serial.println(StringPad("*", 50, '*'));
-    Serial.println();
-    Serial.println("Start");
 
-    LittleFS.begin();
-    Dir D = LittleFS.openDir("/");
-    while (D.next())
-    {
-        Serial.println(D.fileName());
-        Serial.print("-");
-        Serial.println(StringPad(D.fileName(), 39, '-'));
-        File F = D.openFile("r");
-        int c = 0;
-        while (c >= 0)
-        {
-            c = F.read();
-            if (c >= 0)
-            {
-                Serial.print((char)c);
-            }
-        }
-        Serial.println();
-        Serial.println(F("----------------------------------------"));
-    }
-
-    pinMode(LED_BUILTIN, OUTPUT);
-}
-
+//////////////////////////////////////////////////////////////////////////////
+//
 void ShowLED(int Pin, int Delay, bool On)
 {
     if (On)
@@ -811,9 +762,12 @@ void ShowLED(int Pin, int Delay, bool On)
     delay(Delay);
 }
 
+
+//////////////////////////////////////////////////////////////////////////////
+//
 void loop()
 {
     check_status();
-    ShowLED(LED_BUILTIN, 100, true);
-    ShowLED(LED_BUILTIN, 100, false);
+    ShowLED(LED_BUILTIN, 50, true);
+    ShowLED(LED_BUILTIN, 2000, false);
 }
