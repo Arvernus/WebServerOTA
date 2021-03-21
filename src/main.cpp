@@ -2,13 +2,13 @@
 // ESP8266 Framework Program with Web-Server and
 // WIFI Setup per Web-Front-End.
 //
+#include "Utils.h"
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
+#include <ArduinoJson.h>
 #include <DNSServer.h>
+#include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <LittleFS.h>
-#include <ArduinoJson.h>
-#include "Utils.h"
 
 // Global Definitions from Build System
 //
@@ -32,7 +32,6 @@
 //
 Config Conf;
 
-
 //////////////////////////////////////////////////////////////////////////////
 //
 ESP8266WiFiMulti wifiMulti;
@@ -50,23 +49,20 @@ String Router_Pass;
 #define SSID_MAX_LEN 32
 #define PASS_MAX_LEN 64
 
-typedef struct
-{
+typedef struct {
   char WiFi_SSID[SSID_MAX_LEN];
-  char WiFi_Password [PASS_MAX_LEN];
-}  WiFi_Credentials;
+  char WiFi_Password[PASS_MAX_LEN];
+} WiFi_Credentials;
 
-typedef struct
-{
+typedef struct {
   String WiFi_SSID;
   String WiFi_Password;
-}  WiFi_Credentials_String;
+} WiFi_Credentials_String;
 
 #define NUM_WIFI_CREDENTIALS 2
 
-typedef struct
-{
-  WiFi_Credentials WiFi_Creds [NUM_WIFI_CREDENTIALS];
+typedef struct {
+  WiFi_Credentials WiFi_Creds[NUM_WIFI_CREDENTIALS];
 } WM_Config;
 
 WM_Config WM_config;
@@ -81,7 +77,7 @@ String AP_PASS;
 // Use false if you don't like to display Available Pages in Information Page of Config Portal
 // Comment out or use true to display Available Pages in Information Page of Config Portal
 // Must be placed before #include <ESPAsync_WiFiManager.h>
-#define USE_AVAILABLE_PAGES     false
+#define USE_AVAILABLE_PAGES false
 
 // From v1.0.10 to permit disable/enable StaticIP configuration in Config Portal from sketch. Valid only if DHCP is used.
 // You'll loose the feature of dynamically changing from DHCP to static IP, or vice versa
@@ -90,14 +86,14 @@ String AP_PASS;
 
 // Use false to disable NTP config. Advisable when using Cellphone, Tablet to access Config Portal.
 // See Issue 23: On Android phone ConfigPortal is unresponsive (https://github.com/khoih-prog/ESP_WiFiManager/issues/23)
-#define USE_ESP_WIFIMANAGER_NTP     false
+#define USE_ESP_WIFIMANAGER_NTP false
 
 // Use true to enable CloudFlare NTP service. System can hang if you don't have Internet access while accessing CloudFlare
 // See Issue #21: CloudFlare link in the default portal (https://github.com/khoih-prog/ESP_WiFiManager/issues/21)
-#define USE_CLOUDFLARE_NTP          false
+#define USE_CLOUDFLARE_NTP false
 
 // New in v1.0.11
-#define USING_CORS_FEATURE          true
+#define USING_CORS_FEATURE true
 //////
 
 // Use USE_DHCP_IP == true for dynamic DHCP IP, false to use static IP which you have to change accordingly to your network
@@ -106,79 +102,76 @@ String AP_PASS;
 #if defined(USE_DHCP_IP)
 #undef USE_DHCP_IP
 #endif
-#define USE_DHCP_IP     true
+#define USE_DHCP_IP true
 #else
 // You can select DHCP or Static IP here
 //#define USE_DHCP_IP     true
-#define USE_DHCP_IP     false
+#define USE_DHCP_IP false
 #endif
 
-#if ( USE_DHCP_IP )
+#if (USE_DHCP_IP)
 // Use DHCP
 #warning Using DHCP IP
-IPAddress stationIP   = IPAddress(0, 0, 0, 0);
-IPAddress gatewayIP   = IPAddress(192, 168, 2, 1);
-IPAddress netMask     = IPAddress(255, 255, 255, 0);
+IPAddress stationIP = IPAddress(0, 0, 0, 0);
+IPAddress gatewayIP = IPAddress(192, 168, 2, 1);
+IPAddress netMask = IPAddress(255, 255, 255, 0);
 #else
 // Use static IP
 #warning Using static IP
 #ifdef ESP32
-IPAddress stationIP   = IPAddress(192, 168, 2, 232);
+IPAddress stationIP = IPAddress(192, 168, 2, 232);
 #else
-IPAddress stationIP   = IPAddress(192, 168, 2, 186);
+IPAddress stationIP = IPAddress(192, 168, 2, 186);
 #endif
 
-IPAddress gatewayIP   = IPAddress(192, 168, 2, 1);
-IPAddress netMask     = IPAddress(255, 255, 255, 0);
+IPAddress gatewayIP = IPAddress(192, 168, 2, 1);
+IPAddress netMask = IPAddress(255, 255, 255, 0);
 #endif
 
-#define USE_CONFIGURABLE_DNS      true
+#define USE_CONFIGURABLE_DNS true
 
-IPAddress dns1IP      = gatewayIP;
-IPAddress dns2IP      = IPAddress(8, 8, 8, 8);
+IPAddress dns1IP = gatewayIP;
+IPAddress dns2IP = IPAddress(8, 8, 8, 8);
 
-IPAddress APStaticIP  = IPAddress(192, 168, 100, 1);
-IPAddress APStaticGW  = IPAddress(192, 168, 100, 1);
-IPAddress APStaticSN  = IPAddress(255, 255, 255, 0);
+IPAddress APStaticIP = IPAddress(192, 168, 100, 1);
+IPAddress APStaticGW = IPAddress(192, 168, 100, 1);
+IPAddress APStaticSN = IPAddress(255, 255, 255, 0);
 
 #include <ESPAsync_WiFiManager.h>
 
-#define HTTP_PORT           80
+#define HTTP_PORT 80
 
 //define your default values here, if there are different values in config.json, they are overwritten.
 //length should be max size + 1
-char mqtt_server  [40]  = "mqtt-server.ddns.net";
-char mqtt_port    [6]   = "1883";
-char blynk_token  [33]  = "YOUR_BLYNK_TOKEN";
+char mqtt_server[40] = "mqtt-server.ddns.net";
+char mqtt_port[6] = "1883";
+char blynk_token[33] = "YOUR_BLYNK_TOKEN";
 
 //flag for saving data
 bool shouldSaveConfig = false;
 
-WiFi_AP_IPConfig  WM_AP_IPconfig;
+WiFi_AP_IPConfig WM_AP_IPconfig;
 WiFi_STA_IPConfig WM_STA_IPconfig;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void initAPIPConfigStruct(WiFi_AP_IPConfig &in_WM_AP_IPconfig)
-{
-  in_WM_AP_IPconfig._ap_static_ip   = APStaticIP;
-  in_WM_AP_IPconfig._ap_static_gw   = APStaticGW;
-  in_WM_AP_IPconfig._ap_static_sn   = APStaticSN;
+void initAPIPConfigStruct(WiFi_AP_IPConfig &in_WM_AP_IPconfig) {
+  in_WM_AP_IPconfig._ap_static_ip = APStaticIP;
+  in_WM_AP_IPconfig._ap_static_gw = APStaticGW;
+  in_WM_AP_IPconfig._ap_static_sn = APStaticSN;
 }
 
-void initSTAIPConfigStruct(WiFi_STA_IPConfig &in_WM_STA_IPconfig)
-{
-  in_WM_STA_IPconfig._sta_static_ip   = stationIP;
-  in_WM_STA_IPconfig._sta_static_gw   = gatewayIP;
-  in_WM_STA_IPconfig._sta_static_sn   = netMask;
+void initSTAIPConfigStruct(WiFi_STA_IPConfig &in_WM_STA_IPconfig) {
+  in_WM_STA_IPconfig._sta_static_ip = stationIP;
+  in_WM_STA_IPconfig._sta_static_gw = gatewayIP;
+  in_WM_STA_IPconfig._sta_static_sn = netMask;
 #if USE_CONFIGURABLE_DNS
   in_WM_STA_IPconfig._sta_static_dns1 = dns1IP;
   in_WM_STA_IPconfig._sta_static_dns2 = dns2IP;
 #endif
 }
 
-void displayIPConfigStruct(WiFi_STA_IPConfig in_WM_STA_IPconfig)
-{
+void displayIPConfigStruct(WiFi_STA_IPConfig in_WM_STA_IPconfig) {
   LOGERROR3(F("stationIP ="), in_WM_STA_IPconfig._sta_static_ip, ", gatewayIP =", in_WM_STA_IPconfig._sta_static_gw);
   LOGERROR1(F("netMask ="), in_WM_STA_IPconfig._sta_static_sn);
 #if USE_CONFIGURABLE_DNS
@@ -186,42 +179,37 @@ void displayIPConfigStruct(WiFi_STA_IPConfig in_WM_STA_IPconfig)
 #endif
 }
 
-void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
-{
-  #if USE_CONFIGURABLE_DNS
-    // Set static IP, Gateway, Subnetmask, DNS1 and DNS2. New in v1.0.5
-    WiFi.config(in_WM_STA_IPconfig._sta_static_ip, in_WM_STA_IPconfig._sta_static_gw, in_WM_STA_IPconfig._sta_static_sn, in_WM_STA_IPconfig._sta_static_dns1, in_WM_STA_IPconfig._sta_static_dns2);  
-  #else
-    // Set static IP, Gateway, Subnetmask, Use auto DNS1 and DNS2.
-    WiFi.config(in_WM_STA_IPconfig._sta_static_ip, in_WM_STA_IPconfig._sta_static_gw, in_WM_STA_IPconfig._sta_static_sn);
-  #endif
+void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig) {
+#if USE_CONFIGURABLE_DNS
+  // Set static IP, Gateway, Subnetmask, DNS1 and DNS2. New in v1.0.5
+  WiFi.config(in_WM_STA_IPconfig._sta_static_ip, in_WM_STA_IPconfig._sta_static_gw, in_WM_STA_IPconfig._sta_static_sn, in_WM_STA_IPconfig._sta_static_dns1, in_WM_STA_IPconfig._sta_static_dns2);
+#else
+  // Set static IP, Gateway, Subnetmask, Use auto DNS1 and DNS2.
+  WiFi.config(in_WM_STA_IPconfig._sta_static_ip, in_WM_STA_IPconfig._sta_static_gw, in_WM_STA_IPconfig._sta_static_sn);
+#endif
 }
 
 ///////////////////////////////////////////
 
-uint8_t connectMultiWiFi()
-{
+uint8_t connectMultiWiFi() {
 #define WIFI_MULTI_1ST_CONNECT_WAITING_MS 2200L
 #define WIFI_MULTI_CONNECT_WAITING_MS 100L
-  
+
   uint8_t status;
 
   LOGERROR(F("ConnectMultiWiFi with :"));
-  
-  if ( (Router_SSID != "") && (Router_Pass != "") )
-  {
-    LOGERROR3(F("* Flash-stored Router_SSID = "), Router_SSID, F(", Router_Pass = "), Router_Pass );
+
+  if ((Router_SSID != "") && (Router_Pass != "")) {
+    LOGERROR3(F("* Flash-stored Router_SSID = "), Router_SSID, F(", Router_Pass = "), Router_Pass);
   }
 
-  for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
-  {
+  for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++) {
     // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-    if ( (String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE) )
-    {
+    if ((String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE)) {
       LOGERROR3(F("* Additional SSID = "), WM_config.WiFi_Creds[i].WiFi_SSID, F(", PW = "), WM_config.WiFi_Creds[i].WiFi_Password);
     }
   }
-  
+
   LOGERROR(F("Connecting MultiWifi..."));
 
   WiFi.mode(WIFI_STA);
@@ -236,122 +224,105 @@ uint8_t connectMultiWiFi()
   status = wifiMulti.run();
   delay(WIFI_MULTI_1ST_CONNECT_WAITING_MS);
 
-  while ( ( i++ < 20 ) && ( status != WL_CONNECTED ) )
-  {
+  while ((i++ < 20) && (status != WL_CONNECTED)) {
     status = wifiMulti.run();
 
-    if ( status == WL_CONNECTED )
+    if (status == WL_CONNECTED)
       break;
     else
       delay(WIFI_MULTI_CONNECT_WAITING_MS);
   }
 
-  if ( status == WL_CONNECTED )
-  {
+  if (status == WL_CONNECTED) {
     LOGERROR1(F("WiFi connected after time: "), i);
     LOGERROR3(F("SSID:"), WiFi.SSID(), F(",RSSI="), WiFi.RSSI());
-    LOGERROR3(F("Channel:"), WiFi.channel(), F(",IP address:"), WiFi.localIP() );
-  }
-  else
+    LOGERROR3(F("Channel:"), WiFi.channel(), F(",IP address:"), WiFi.localIP());
+  } else
     LOGERROR(F("WiFi not connected"));
 
   return status;
 }
 
 //callback notifying us of the need to save config
-void saveConfigCallback ()
-{
+void saveConfigCallback() {
   Serial.println("Should save config");
   shouldSaveConfig = true;
 }
 
-void heartBeatPrint()
-{
+void heartBeatPrint() {
   static int num = 1;
 
   if (WiFi.status() == WL_CONNECTED)
-    Serial.print(F("H"));        // H means connected to WiFi
+    Serial.print(F("H")); // H means connected to WiFi
   else
-    Serial.print(F("F"));        // F means not connected to WiFi
+    Serial.print(F("F")); // F means not connected to WiFi
 
-  if (num == 80)
-  {
+  if (num == 80) {
     Serial.println();
     num = 1;
-  }
-  else if (num++ % 10 == 0)
-  {
+  } else if (num++ % 10 == 0) {
     Serial.print(F(" "));
   }
 }
 
-void toggleLED()
-{
+void toggleLED() {
   //toggle state
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
-void check_WiFi()
-{
-  if ( (WiFi.status() != WL_CONNECTED) )
-  {
+void check_WiFi() {
+  if ((WiFi.status() != WL_CONNECTED)) {
     Serial.println(F("\nWiFi lost. Call connectMultiWiFi in loop"));
     connectMultiWiFi();
   }
 }
 
-void check_status()
-{
-  static ulong checkstatus_timeout  = 0;
-  static ulong LEDstatus_timeout    = 0;
-  static ulong checkwifi_timeout    = 0;
+void check_status() {
+  static ulong checkstatus_timeout = 0;
+  static ulong LEDstatus_timeout = 0;
+  static ulong checkwifi_timeout = 0;
   static ulong currentMillis;
 
-#define HEARTBEAT_INTERVAL    10000L
-#define LED_INTERVAL          2000L
-#define WIFICHECK_INTERVAL    1000L
+#define HEARTBEAT_INTERVAL 10000L
+#define LED_INTERVAL 2000L
+#define WIFICHECK_INTERVAL 1000L
 
   currentMillis = millis();
 
   // Check WiFi every WIFICHECK_INTERVAL (1) seconds.
-  if ((currentMillis > checkwifi_timeout) || (checkwifi_timeout == 0))
-  {
+  if ((currentMillis > checkwifi_timeout) || (checkwifi_timeout == 0)) {
     check_WiFi();
     checkwifi_timeout = currentMillis + WIFICHECK_INTERVAL;
   }
 
-  if ((currentMillis > LEDstatus_timeout) || (LEDstatus_timeout == 0))
-  {
+  if ((currentMillis > LEDstatus_timeout) || (LEDstatus_timeout == 0)) {
     // Toggle LED at LED_INTERVAL = 2s
     toggleLED();
     LEDstatus_timeout = currentMillis + LED_INTERVAL;
   }
 
   // Print hearbeat every HEARTBEAT_INTERVAL (10) seconds.
-  if ((currentMillis > checkstatus_timeout) || (checkstatus_timeout == 0))
-  {
+  if ((currentMillis > checkstatus_timeout) || (checkstatus_timeout == 0)) {
     heartBeatPrint();
     checkstatus_timeout = currentMillis + HEARTBEAT_INTERVAL;
   }
 }
 
-bool loadConfigData()
-{
+bool loadConfigData() {
   return false;
   File file = LittleFS.open(CONFIG_FILE, "r");
 
-  memset(&WM_config,       0, sizeof(WM_config));
+  memset(&WM_config, 0, sizeof(WM_config));
 
   // New in v1.4.0
   memset(&WM_STA_IPconfig, 0, sizeof(WM_STA_IPconfig));
   //////
 
-  if (file)
-  {
-    file.readBytes((char *) &WM_config,   sizeof(WM_config));
+  if (file) {
+    file.readBytes((char *)&WM_config, sizeof(WM_config));
 
     // New in v1.4.0
-    file.readBytes((char *) &WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
+    file.readBytes((char *)&WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
     //////
 
     file.close();
@@ -361,56 +332,49 @@ bool loadConfigData()
     //////
 
     return true;
-  }
-  else
-  {
+  } else {
     Serial.println(F("failed"));
 
     return false;
   }
 }
 
-void saveConfigData()
-{
+void saveConfigData() {
   return;
   File file = LittleFS.open(CONFIG_FILE, "w");
   Serial.println(F("SaveWiFiCfgFile "));
 
-  if (file)
-  {
-    file.write((uint8_t*) &WM_config,   sizeof(WM_config));
+  if (file) {
+    file.write((uint8_t *)&WM_config, sizeof(WM_config));
 
     displayIPConfigStruct(WM_STA_IPconfig);
 
     // New in v1.4.0
-    file.write((uint8_t*) &WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
+    file.write((uint8_t *)&WM_STA_IPconfig, sizeof(WM_STA_IPconfig));
     //////
 
     file.close();
     Serial.println(F("OK"));
-  }
-  else
-  {
+  } else {
     Serial.println(F("failed"));
   }
 }
 
-
 //////////////////////////////////////////////////////////////////////////////
 //
-void setup()
-{
+void setup() {
   //set led pin as output
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LED_ON);
 
   // Put your setup code here, to run once
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial)
+    ;
   Serial.println();
   Serial.println(StringPad("*", 50, '*'));
   Serial.println("*" + StringPad("*", -49, ' '));
-  Serial.println("*  " + StringPad(DEVICE_NAME, 44, ' ')+"  *");
+  Serial.println("*  " + StringPad(DEVICE_NAME, 44, ' ') + "  *");
   Serial.println("*" + StringPad("*", -49, ' '));
   Serial.println("*  Version: " + StringPad(MAKE_STR(VERSION), 35, ' ') + "  *");
   Serial.println("*" + StringPad("*", -49, ' '));
@@ -430,9 +394,9 @@ void setup()
   // The extra parameters to be configured (can be either global or just in the setup)
   // After connecting, parameter.getValue() will get you the configured value
   // id/name placeholder/prompt default length
-  ESPAsync_WMParameter custom_mqtt_server ("server",  "mqtt server",  mqtt_server,  40);
-  ESPAsync_WMParameter custom_mqtt_port   ("port",    "mqtt port",    mqtt_port,    5);
-  ESPAsync_WMParameter custom_blynk_token ("blynk",   "blynk token",  blynk_token,  34);
+  ESPAsync_WMParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
+  ESPAsync_WMParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 5);
+  ESPAsync_WMParameter custom_blynk_token("blynk", "blynk token", blynk_token, 34);
 
   unsigned long startedAt = millis();
 
@@ -448,7 +412,7 @@ void setup()
   // Use this to personalize DHCP hostname (RFC952 conformed)
   AsyncWebServer webServer(HTTP_PORT);
 
-#if ( ARDUINO_ESP32S2_DEV || ARDUINO_FEATHERS2 || ARDUINO_PROS2 || ARDUINO_MICROS2 )
+#if (ARDUINO_ESP32S2_DEV || ARDUINO_FEATHERS2 || ARDUINO_PROS2 || ARDUINO_MICROS2)
   ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, NULL, "AutoConnect-FSParams");
 #else
   DNSServer dnsServer;
@@ -485,10 +449,10 @@ void setup()
   //////
 
 #if !USE_DHCP_IP
-    // Set (static IP, Gateway, Subnetmask, DNS1 and DNS2) or (IP, Gateway, Subnetmask). New in v1.0.5
-    // New in v1.4.0
-    ESPAsync_wifiManager.setSTAStaticIPConfig(WM_STA_IPconfig);
-    //////
+  // Set (static IP, Gateway, Subnetmask, DNS1 and DNS2) or (IP, Gateway, Subnetmask). New in v1.0.5
+  // New in v1.4.0
+  ESPAsync_wifiManager.setSTAStaticIPConfig(WM_STA_IPconfig);
+  //////
 #endif
 
   // New from v1.1.1
@@ -508,24 +472,19 @@ void setup()
   bool configDataLoaded = false;
 
   // From v1.1.0, Don't permit NULL password
-  if ( (Router_SSID != "") && (Router_Pass != "") )
-  {
+  if ((Router_SSID != "") && (Router_Pass != "")) {
     LOGERROR3(F("* Add SSID = "), Router_SSID, F(", PW = "), Router_Pass);
     wifiMulti.addAP(Router_SSID.c_str(), Router_Pass.c_str());
 
     ESPAsync_wifiManager.setConfigPortalTimeout(120); //If no access point name has been previously entered disable timeout.
     Serial.println(F("Got ESP Self-Stored Credentials. Timeout 120s for Config Portal"));
-  }
-  else if (loadConfigData())
-  {
+  } else if (loadConfigData()) {
     configDataLoaded = true;
 
     ESPAsync_wifiManager.setConfigPortalTimeout(120); //If no access point name has been previously entered disable timeout.
-    Serial.println(F("Got stored Credentials. Timeout 120s for Config Portal")); 
-  }
-  else
-  {
-    // Enter CP only if no stored SSID on flash and file 
+    Serial.println(F("Got stored Credentials. Timeout 120s for Config Portal"));
+  } else {
+    // Enter CP only if no stored SSID on flash and file
     Serial.println(F("Open Config Portal without Timeout: No stored Credentials."));
     initialConfig = true;
   }
@@ -537,13 +496,12 @@ void setup()
   AP_SSID = "ESP_" + chipID + "_AutoConnectAP";
   AP_PASS = "MyESP_" + chipID;
 
-  if (initialConfig)
-  {
+  if (initialConfig) {
     Serial.println(F("We haven't got any access point credentials, so get them now"));
 
     // Starts an access point
     //if (!ESPAsync_wifiManager.startConfigPortal((const char *) ssid.c_str(), password))
-    if ( !ESPAsync_wifiManager.startConfigPortal(AP_SSID.c_str(), AP_PASS.c_str()) )
+    if (!ESPAsync_wifiManager.startConfigPortal(AP_SSID.c_str(), AP_PASS.c_str()))
       Serial.println(F("Not connected to WiFi but continuing anyway."));
     else
       Serial.println(F("WiFi connected...yeey :)"));
@@ -551,10 +509,9 @@ void setup()
     // Stored  for later usage, from v1.1.0, but clear first
     memset(&WM_config, 0, sizeof(WM_config));
 
-    for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
-    {
+    for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++) {
       String tempSSID = ESPAsync_wifiManager.getSSID(i);
-      String tempPW   = ESPAsync_wifiManager.getPW(i);
+      String tempPW = ESPAsync_wifiManager.getPW(i);
 
       if (strlen(tempSSID.c_str()) < sizeof(WM_config.WiFi_Creds[i].WiFi_SSID) - 1)
         strcpy(WM_config.WiFi_Creds[i].WiFi_SSID, tempSSID.c_str());
@@ -567,8 +524,7 @@ void setup()
         strncpy(WM_config.WiFi_Creds[i].WiFi_Password, tempPW.c_str(), sizeof(WM_config.WiFi_Creds[i].WiFi_Password) - 1);
 
       // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-      if ( (String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE) )
-      {
+      if ((String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE)) {
         LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].WiFi_SSID, F(", PW = "), WM_config.WiFi_Creds[i].WiFi_Password);
         wifiMulti.addAP(WM_config.WiFi_Creds[i].WiFi_SSID, WM_config.WiFi_Creds[i].WiFi_Password);
       }
@@ -579,32 +535,26 @@ void setup()
     //////
 
     saveConfigData();
-  }
-  else
-  {
+  } else {
     wifiMulti.addAP(Router_SSID.c_str(), Router_Pass.c_str());
   }
 
   startedAt = millis();
 
-  if (!initialConfig)
-  {
+  if (!initialConfig) {
     // Load stored data, the addAP ready for MultiWiFi reconnection
     if (!configDataLoaded)
       loadConfigData();
 
-    for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++)
-    {
+    for (uint8_t i = 0; i < NUM_WIFI_CREDENTIALS; i++) {
       // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
-      if ( (String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE) )
-      {
+      if ((String(WM_config.WiFi_Creds[i].WiFi_SSID) != "") && (strlen(WM_config.WiFi_Creds[i].WiFi_Password) >= MIN_AP_PASSWORD_SIZE)) {
         LOGERROR3(F("* Add SSID = "), WM_config.WiFi_Creds[i].WiFi_SSID, F(", PW = "), WM_config.WiFi_Creds[i].WiFi_Password);
         wifiMulti.addAP(WM_config.WiFi_Creds[i].WiFi_SSID, WM_config.WiFi_Creds[i].WiFi_Password);
       }
     }
 
-    if ( WiFi.status() != WL_CONNECTED )
-    {
+    if (WiFi.status() != WL_CONNECTED) {
       Serial.println(F("ConnectMultiWiFi in setup"));
 
       connectMultiWiFi();
@@ -612,15 +562,13 @@ void setup()
   }
 
   Serial.print(F("After waiting "));
-  Serial.print((float) (millis() - startedAt) / 1000L);
+  Serial.print((float)(millis() - startedAt) / 1000L);
   Serial.print(F(" secs more in setup(), connection result is "));
 
-  if (WiFi.status() == WL_CONNECTED)
-  {
+  if (WiFi.status() == WL_CONNECTED) {
     Serial.print(F("connected. Local IP: "));
     Serial.println(WiFi.localIP());
-  }
-  else
+  } else
     Serial.println(ESPAsync_wifiManager.getStatus(WiFi.status()));
 
   //read updated parameters
@@ -632,37 +580,30 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.print(F("GateWay IP = "));
   Serial.println(WiFi.gatewayIP());
-  Serial.print(F("SubnetMask = ")); 
+  Serial.print(F("SubnetMask = "));
   Serial.println(WiFi.subnetMask());
 
   //keep LED off
   digitalWrite(LED_BUILTIN, LED_OFF);
 }
 
-
 //////////////////////////////////////////////////////////////////////////////
 //
-void ShowLED(int Pin, int Delay, bool On)
-{
-    if (On)
-    {
-        digitalWrite(Pin, LOW);
-        Serial.println("The LED is on");
-    }
-    else
-    {
-        digitalWrite(Pin, HIGH);
-        Serial.println("The LED is off");
-    }
-    delay(Delay);
+void ShowLED(int Pin, int Delay, bool On) {
+  if (On) {
+    digitalWrite(Pin, LOW);
+    Serial.println("The LED is on");
+  } else {
+    digitalWrite(Pin, HIGH);
+    Serial.println("The LED is off");
+  }
+  delay(Delay);
 }
 
-
 //////////////////////////////////////////////////////////////////////////////
 //
-void loop()
-{
-    check_status();
-    ShowLED(LED_BUILTIN, 50, true);
-    ShowLED(LED_BUILTIN, 2000, false);
+void loop() {
+  check_status();
+  ShowLED(LED_BUILTIN, 50, true);
+  ShowLED(LED_BUILTIN, 2000, false);
 }

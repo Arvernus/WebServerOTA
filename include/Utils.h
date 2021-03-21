@@ -13,24 +13,24 @@ void CatFile(const char *FileName);
 const unsigned int NoOfDNS = 4;
 const unsigned int NoOfParameters = 20;
 typedef struct {
-    String WiFiSSID;
-    String WiFiPassword;
-    String WiFiIP;
-    String WiFiNetMask;
-    String WiFiGateway;
-    bool WiFiDHCP;
-    String WiFiDNS[NoOfDNS];
-    //
-    String AccessPointSSID;
-    String AccessPointPassword;
-    String AccessPointIP;
-    String AccessPointNetMask;
-    String AccessPointGateway;
-    //
-    unsigned int HttpPort;
-    //
-    String ParameterName[NoOfParameters];
-    String ParameterValue[NoOfParameters];
+  String WiFiSSID;
+  String WiFiPassword;
+  String WiFiIP;
+  String WiFiNetMask;
+  String WiFiGateway;
+  bool WiFiDHCP;
+  String WiFiDNS[NoOfDNS];
+  //
+  String AccessPointSSID;
+  String AccessPointPassword;
+  String AccessPointIP;
+  String AccessPointNetMask;
+  String AccessPointGateway;
+  //
+  unsigned int HttpPort;
+  //
+  String ParameterName[NoOfParameters];
+  String ParameterValue[NoOfParameters];
 } Config;
 void InitConfig(Config &Conf, const char *DevName);
 String ReadConfig(Config &Conf, const char *ConfigFileName, const char *DevName);

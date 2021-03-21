@@ -1,28 +1,24 @@
 #include "Utils.h"
-#include <LittleFS.h>
+
 #include <ArduinoJson.h>
+#include <LittleFS.h>
 
 // Print a String with a fixed length
 //
-String StringPad(String Str, int Length, char Filler)
-{
+String StringPad(String Str, int Length, char Filler) {
   int StrLen = Str.length();
   String Result = "";
   int AdditionalCharacters = 0;
-  if (Length < 0)
-  {
+  if (Length < 0) {
     AdditionalCharacters = -Length - StrLen;
-    while (--AdditionalCharacters >= 0)
-    {
+    while (--AdditionalCharacters >= 0) {
       Result += Filler;
     }
   }
   Result += Str;
-  if (Length > 0)
-  {
+  if (Length > 0) {
     AdditionalCharacters = Length - StrLen;
-    while (--AdditionalCharacters >= 0)
-    {
+    while (--AdditionalCharacters >= 0) {
       Result += Filler;
     }
   }
@@ -31,15 +27,13 @@ String StringPad(String Str, int Length, char Filler)
 
 // List a Directory
 //
-void ListDir(const char *Path)
-{
+void ListDir(const char *Path) {
   Dir D = LittleFS.openDir(Path);
   Serial.println();
   Serial.print(F("LittleFS File System: "));
   Serial.println(Path);
   Serial.println();
-  while (D.next())
-  {
+  while (D.next()) {
     Serial.printf("%10d ", D.fileSize());
     Serial.println(D.fileName());
   }
@@ -47,22 +41,16 @@ void ListDir(const char *Path)
 
 // List the content of a File
 //
-void CatFile(const char *FileName)
-{
+void CatFile(const char *FileName) {
   Serial.print("-");
   Serial.println(StringPad(FileName, 78, '-'));
   File F = LittleFS.open(FileName, "r");
-  if (F)
-  {
+  if (F) {
     int c = F.read();
-    while (c >= 0)
-    {
-      if (isPrintable(c) || (c == 10) || (c == 13))
-      {
+    while (c >= 0) {
+      if (isPrintable(c) || (c == 10) || (c == 13)) {
         Serial.print((char)c);
-      }
-      else
-      {
+      } else {
         Serial.print(F("\\x"));
         Serial.print((unsigned int)c, HEX);
       }
@@ -75,16 +63,14 @@ void CatFile(const char *FileName)
 
 // Initialise Configuration to Hard-Coded Defaults
 //
-void InitConfig(Config &Conf, const char *DevName)
-{
+void InitConfig(Config &Conf, const char *DevName) {
   Conf.WiFiSSID = "";
   Conf.WiFiPassword = "";
   Conf.WiFiIP = "";
   Conf.WiFiNetMask = "";
   Conf.WiFiGateway = "";
   Conf.WiFiDHCP = true;
-  for (unsigned int i = 0; i < NoOfDNS; i++)
-  {
+  for (unsigned int i = 0; i < NoOfDNS; i++) {
     Conf.WiFiDNS[i] = "";
   }
   Conf.WiFiDNS[0] = F("8.8.8.8");
@@ -99,8 +85,7 @@ void InitConfig(Config &Conf, const char *DevName)
   //
   Conf.HttpPort = 80;
   //
-  for (unsigned int i = 0; i < NoOfParameters; i++)
-  {
+  for (unsigned int i = 0; i < NoOfParameters; i++) {
     Conf.ParameterName[i] = "";
     Conf.ParameterValue[i] = "";
   }
@@ -108,25 +93,20 @@ void InitConfig(Config &Conf, const char *DevName)
 
 // Read the Configuration
 //
-String ReadConfig(Config &Conf, const char *ConfigFileName, const char *DevName)
-{
+String ReadConfig(Config &Conf, const char *ConfigFileName, const char *DevName) {
   String Result = "";
 
   InitConfig(Conf, DevName);
 
   File F = LittleFS.open(ConfigFileName, "r");
-  if (F)
-  {
+  if (F) {
     StaticJsonDocument<1024> Doc;
     DeserializationError Error = deserializeJson(Doc, F);
     F.close();
-    if (Error)
-    {
+    if (Error) {
       Result += F("Reading Config-File failed with Error: ");
       Result += Error.c_str();
-    }
-    else
-    {
+    } else {
       Conf.WiFiSSID = Doc[F("WiFi")][F("SSID")] | Conf.WiFiSSID;
       Conf.WiFiPassword = Doc[F("WiFi")][F("Password")] | Conf.WiFiPassword;
       Conf.WiFiIP = Doc[F("WiFi")][F("IP")] | Conf.WiFiIP;
@@ -134,15 +114,12 @@ String ReadConfig(Config &Conf, const char *ConfigFileName, const char *DevName)
       Conf.WiFiGateway = Doc[F("WiFi")][F("Gateway")] | Conf.WiFiGateway;
       Conf.WiFiDHCP = Doc[F("WiFi")][F("DHCP")] | Conf.WiFiDHCP;
       JsonArray DNS = Doc[F("WiFi")][F("DNS")].as<JsonArray>();
-      if (DNS)
-      {
+      if (DNS) {
         unsigned int i;
-        for (i = 0; (i < DNS.size())&&(i < NoOfDNS); i++)
-        {
+        for (i = 0; (i < DNS.size()) && (i < NoOfDNS); i++) {
           Conf.WiFiDNS[i] = DNS[i].as<String>();
         }
-        while (i < NoOfDNS)
-        {
+        while (i < NoOfDNS) {
           Conf.WiFiDNS[i] = "";
           i += 1;
         }
@@ -159,37 +136,30 @@ String ReadConfig(Config &Conf, const char *ConfigFileName, const char *DevName)
       Conf.AccessPointGateway = Doc[F("AccessPoint")][F("Gateway")] | Conf.AccessPointGateway;
       Conf.HttpPort = Doc[F("HttpPort")] | Conf.HttpPort;
       JsonObject Parameter = Doc[F("Parameter")].as<JsonObject>();
-      if (Parameter)
-      {
+      if (Parameter) {
         unsigned int i = 0;
-        for (JsonPair Par : Parameter)
-        {
+        for (JsonPair Par : Parameter) {
           Conf.ParameterName[i] = Par.key().c_str();
           Conf.ParameterValue[i] = Par.value().as<String>();
           i += 1;
         }
-        while (i < NoOfParameters)
-        {
+        while (i < NoOfParameters) {
           Conf.ParameterName[i] = "";
           Conf.ParameterValue[i] = "";
           i += 1;
         }
       }
     }
-  }
-  else
-  {
+  } else {
     Result += F("Error: Can not open Config-File: ");
     Result += ConfigFileName;
   }
   return Result;
 }
 
-
 // Convert Configuration to Json
 //
-String JsonConfig(Config &Conf)
-{
+String JsonConfig(Config &Conf) {
   StaticJsonDocument<1024> Doc;
   JsonObject WiFi = Doc.createNestedObject(F("WiFi"));
   WiFi[F("SSID")] = Conf.WiFiSSID;
@@ -199,12 +169,9 @@ String JsonConfig(Config &Conf)
   WiFi[F("Gateway")] = Conf.WiFiGateway;
   WiFi[F("DHCP")] = Conf.WiFiDHCP;
   JsonArray DNS;
-  for (unsigned int i = 0; i < NoOfDNS; i++)
-  {
-    if (Conf.WiFiDNS[i].length())
-    {
-      if (DNS.isNull())
-      {
+  for (unsigned int i = 0; i < NoOfDNS; i++) {
+    if (Conf.WiFiDNS[i].length()) {
+      if (DNS.isNull()) {
         DNS = WiFi.createNestedArray(F("DNS"));
       }
       DNS.add(Conf.WiFiDNS[i]);
@@ -218,12 +185,9 @@ String JsonConfig(Config &Conf)
   AccessPoint[F("Gateway")] = Conf.AccessPointGateway;
   Doc[F("HttpPort")] = Conf.HttpPort;
   JsonObject Parameter;
-  for (unsigned int i = 0; i < NoOfParameters; i++)
-  {
-    if (Conf.ParameterName[i].length())
-    {
-      if (Parameter.isNull())
-      {
+  for (unsigned int i = 0; i < NoOfParameters; i++) {
+    if (Conf.ParameterName[i].length()) {
+      if (Parameter.isNull()) {
         Parameter = Doc.createNestedObject(F("Parameter"));
       }
       Parameter[Conf.ParameterName[i]] = Conf.ParameterValue[i];
@@ -234,7 +198,6 @@ String JsonConfig(Config &Conf)
   return Json;
 }
 
-
 // Print Configuration
 //
 void PrintConfig(Config &Conf) {
@@ -244,22 +207,17 @@ void PrintConfig(Config &Conf) {
   Serial.println(JsonConfig(Conf));
 }
 
-
 // Write the Configuration
 //
-String WriteConfig(Config &Conf, const char *ConfigFileName)
-{
+String WriteConfig(Config &Conf, const char *ConfigFileName) {
   String Result = "";
 
   File F = LittleFS.open(ConfigFileName, "w");
-  if (F)
-  {
+  if (F) {
     String Json = JsonConfig(Conf);
     F.write(Json.c_str());
     F.close();
-  }
-  else
-  {
+  } else {
     Result += F("Error: Can not create Config-File: ");
     Result += ConfigFileName;
   }
